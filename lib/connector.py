@@ -1,5 +1,4 @@
 import mysql.connector
-from mysql.connector import errorcode
 
 
 class MysqlConnector:
@@ -18,9 +17,6 @@ class MysqlConnector:
         self.set_password(password)
         self.set_host(host)
         self.set_database(database)
-
-    def __del__(self):
-        self.close()
 
     def is_connected(self):
         return self._connected
@@ -67,7 +63,6 @@ class MysqlConnector:
                 except mysql.connector.Error as e:
                     print('Connection could not be established.')
                     print(e)
-                    exit(1)
             else:
                 self.close()
         else:
@@ -75,68 +70,45 @@ class MysqlConnector:
 
     def close(self):
         if self.is_connected():
-            db = self._conn.database
+            tmp = self._conn.database
             self._conn.close()
             self._connected = False
-            print('Closed connection with database {}.'.format(db))
-
-    def execute(self):
-        pass
-
-    def _create_database():
-        try:
-            with open(DB_SCRIPT) as f:
-                f.readline()
-                sql = f.read()
-            global _cursor
-            _cursor = _conn.cursor()
-            _cursor.execute(sql, multi=True)
-            _conn.commit()
-            # for result in _cursor.execute(sql, multi=True):
-            #     if result.with_rows:
-            #         print("Rows produced by statement '{}':".format(
-            #             result.statement))
-            #         print(result.fetchall())
-            #     else:
-            #         print("Number of rows affected by statement '{}': {}".format(
-            #             result.statement, result.rowcount))
-        except mysql.connector.Error as e:
-            print("Failed creating database: {}".format(e))
-            exit(1)
-
-
-    def executebad(operation, params=(), multi=False):
-        if _conn is not None:
-            try:
-                if not multi:
-                    _cursor.execute(operation, params)
-                    if _cursor.with_rows:
-                        return _cursor.fetchall()
-                    else:
-                        _conn.commit()
-                        return _cursor.rowcount
-                else:
-                    result = {}
-                    i = 0
-                    print("foo")
-                    for res in _cursor.execute(operation, params, True):
-                        if res.with_rows:
-                            result[i] = {
-                                'statement': res.statement,
-                                'lines': res.fetchall()
-                            }
-                        else:
-                            _conn.commit()
-                            result[i] = {
-                                'statement': res.statement,
-                                'affected': res.rowcount
-                            }
-                        print(res.statement)
-                    return result
-            except mysql.connector.Error as e:
-                sql = operation.replace('%s', '{}').replace('%i', '{}').format(params)
-                # print('Error executing query {}'.format(sql))
-                print(e)
-                exit(1)
+            print('Closed connection with database {}.'.format(tmp))
         else:
-            return False
+            print('Connection was not established.')
+
+    def exec(self, operation=''):
+        if self.is_connected():
+            operations = self._parse_operation(operation)
+            results = self._execute(operations)
+            return results
+        else:
+            print('Not connected to any database.')
+
+    @staticmethod
+    def _parse_operation(operation):
+        if operation.startswith(';'):
+            operation = operation[1:]
+        if operation.endswith(';'):
+            operation = operation[:-1]
+        operations = operation.split(';')
+        for i in range(0, len(operations)):
+            operations[i] = operations[i] + ';'
+        return operations
+
+    def _execute(self, operations):
+        # https://dev.mysql.com/doc/connector-python/en/connector-python-api-mysqlcursor-execute.html
+        results = []
+        for op in operations:
+            try:
+                self._cursor.execute(op, (), False)
+                self._conn.commit()
+                if self._cursor.with_rows:
+                    res = self._cursor.fetchall()
+                    results.append(res)
+                else:
+                    results.append(self._cursor.rowcount)
+            except mysql.connector.Error as e:
+                print(e)
+                results.append(None)
+        return results
