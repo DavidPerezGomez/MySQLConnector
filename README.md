@@ -1,7 +1,9 @@
 # MySQLConnector
 Módulo para trabajar con MySQL en pyhton simplificando el uso de MySQL Connector/Python.
 Es necesario tener MySQL Connector/Python:
-https://dev.mysql.com/doc/connector-python/en/connector-python-installation-source.html
+https://dev.mysql.com/doc/connector-python/en/connector-python-installation-source.html o
+
+    sudo pip3 install mysql-connector-python
 
 
 ## Conexión
