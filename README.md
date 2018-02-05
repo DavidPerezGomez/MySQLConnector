@@ -37,6 +37,7 @@ Para ejecutar un solo comando sql
 El resultado de exec depende del tipo de sentencia sql que se ejecute:
 * Las sentecias de consulta (SELECT) devuelven una lista de tuplas, donde cada tupla es una fila del resultado
 * Las el resto de sentencias (INSERT, UPDATE, DELETE, etc.) devuelven el número de filas que se han visto afectadas por la operación.
+Por ejemplo
 
     sql = "INSERT INTO Foo VALUES ('eggs')"
     res = conn.exec(sql)
