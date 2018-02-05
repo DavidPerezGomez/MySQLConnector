@@ -1,4 +1,5 @@
 import mysql.connector
+# https://dev.mysql.com/doc/connector-python/en/connector-python-reference.html
 
 
 class MysqlConnector:
@@ -92,6 +93,7 @@ class MysqlConnector:
         In the case of statements where no rows are returned
         (INSERT, UPDATE, DELETE, etc.), it will instead return the number of
         rows affected by the operation."""
+        # https://dev.mysql.com/doc/connector-python/en/connector-python-api-mysqlcursor-execute.html
         if self.is_connected():
             try:
                 sql = self._parse_operation(operation)
@@ -134,6 +136,7 @@ class MysqlConnector:
         1,
         [(jose,), (pedro,), (marcos,), (manuel,)]]
         """
+        # https://dev.mysql.com/doc/connector-python/en/connector-python-api-mysqlcursor-execute.html
         if self.is_connected():
             try:
                 results = []
