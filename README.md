@@ -1,10 +1,10 @@
-#MySQLConnector
+# MySQLConnector
 Módulo para trabajar con MySQL en pyhton simplificando el uso de MySQL Connector/Python.
 Es necesario tener MySQL Connector/Python:
 https://dev.mysql.com/doc/connector-python/en/connector-python-installation-source.html
 
 
-##Connexión
+## Conexión
 Primero importar la clase MysqlConnector
 
     from mysqlconnector.connector import MysqlConnector
@@ -24,13 +24,11 @@ Cuando todos los valores están asignados, establecer la conexión con
 
     conn.connect()
 
-Cuando se termina de usar la conexión
+Cuando se termina de usar la conexión, cerrarla con
 
     conn.close()
 
-para cerrarla.
-
-##Uso
+## Uso
 Para ejecutar un solo comando sql
 
     sql = "INSERT INTO Foo VALUES ('bar')"
