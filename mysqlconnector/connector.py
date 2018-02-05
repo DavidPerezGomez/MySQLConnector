@@ -3,19 +3,12 @@ import mysql.connector
 
 class MysqlConnector:
 
-    _username = None
-    _password = None
-    _host = None
-    _database = None
-    _connected = False
-    _conn = None
-    _cursor = None
-
     def __init__(self, username=None, password=None, host=None, database=None):
-        self.set_username(username)
-        self.set_password(password)
-        self.set_host(host)
-        self.set_database(database)
+        self._username = username
+        self._password = password
+        self._host = host
+        self._database = database
+        self._connected = False
         self._conn = None
         self._cursor = None
 
@@ -26,9 +19,13 @@ class MysqlConnector:
     def get_connected_database(self):
         """Returns the name of the database connected to, False if it's not connected to any database."""
         if self.is_connected():
-            return self._conn.database
+            try:
+                return self._conn.database
+            except mysql.connector.Error as e:
+                print(e)
+                print('Please, try closing the current connection and opening a new one.')
         else:
-            return False
+            return None
 
     def set_username(self, username):
         """Sets the username to be connected with"""
@@ -79,17 +76,15 @@ class MysqlConnector:
     def close(self):
         """Closes the connection with the database"""
         if self.is_connected():
-            tmp = self._conn.database
             self._conn.close()
             self._cursor = None
             self._connected = False
-            print('Closed connection with database {}.'.format(tmp))
+            print('Closed connection with database.')
         else:
             print('Connection had not been established.')
 
-    def exec(self, operation=''):
+    def exec(self, operation='', data=()):
         """Executes the operation given. Only one operations is accepted.
-        If multiple statements are passed, only the first one will be executed.
         Returns a list where each of its elements is one row of the view
         resulting from the sql statement.
         Each one of those row comes in the form of a tuple, with every element
@@ -97,20 +92,27 @@ class MysqlConnector:
         In the case of statements where no rows are returned
         (INSERT, UPDATE, DELETE, etc.), it will instead return the number of
         rows affected by the operation."""
-        # TODO mencionar lo de que si hay ';' en el propio sql se jode todo
-        # TODO testear con nullvalues, etc.
         if self.is_connected():
-            operations = self._parse_operations(operation)
-            results = self._execute([operations[0]])
-            return results[0]
+            try:
+                sql = self._parse_operation(operation)
+                self._cursor.execute(sql, data, False)
+                if self._cursor.with_rows:
+                    result = self._cursor.fetchall()
+                else:
+                    result = self._cursor.rowcount
+                self._conn.commit()
+                return result
+            except mysql.connector.Error as e:
+                print(e)
+                return None
         else:
             print('Not connected to any database.')
 
-    def exec_mult(self, operation=''):
+    def exec_mult(self, operations=''):
         """Executes the operation or operations given. Multiple operations can
         be executed on a single call. For that, all the statements must come on
         a single string and be separated by ';'. A ';' at the end is not
-        required when a single statement is passed.
+        required.
         Returns a list where each element is the result of one of the sql
         statements.
         Each of the results is a list itself and each of its elements is one
@@ -133,38 +135,27 @@ class MysqlConnector:
         [(jose,), (pedro,), (marcos,), (manuel,)]]
         """
         if self.is_connected():
-            operations = self._parse_operations(operation)
-            results = self._execute(operations)
-            return results
+            try:
+                results = []
+                sql = self._parse_operation(operations)
+                for result in self._cursor.execute(sql, (), True):
+                    if result.with_rows:
+                        results.append(result.fetchall())
+                    else:
+                        results.append(result.rowcount)
+                self._conn.commit()
+                return results
+            except mysql.connector.Error as e:
+                print(e)
+                return None
         else:
             print('Not connected to any database.')
 
-    # @staticmethod
-    # def _parse_operations(operation):
-    #     """Parses a string containing multiple sql statements separated by ';'
-    #     and returns a list containing each of those statements"""
-    #     if operation.startswith(';'):
-    #         operation = operation[1:]
-    #     if operation.endswith(';'):
-    #         operation = operation[:-1]
-    #     operations = operation.split(';')
-    #     for i in range(0, len(operations)):
-    #         operations[i] = operations[i] + ';'
-    #     return operations
-
-    def _execute(self, operations):
-        # https://dev.mysql.com/doc/connector-python/en/connector-python-api-mysqlcursor-execute.html
-        results = []
-        for op in operations:
-            try:
-                self._cursor.execute(op, (), False)
-                self._conn.commit()
-                if self._cursor.with_rows:
-                    res = self._cursor.fetchall()
-                    results.append(res)
-                else:
-                    results.append(self._cursor.rowcount)
-            except mysql.connector.Error as e:
-                print(e)
-                results.append(None)
-        return results
+    @staticmethod
+    def _parse_operation(operation):
+        parsed = operation
+        while parsed.startswith(';'):
+            parsed = parsed[1:]
+        while parsed.endswith(';'):
+            parsed = parsed[:-1]
+        return parsed
