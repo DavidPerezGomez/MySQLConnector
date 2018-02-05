@@ -16,6 +16,8 @@ class MysqlConnector:
         self.set_password(password)
         self.set_host(host)
         self.set_database(database)
+        self._conn = None
+        self._cursor = None
 
     def is_connected(self):
         """Returns True if connection with a database has been established, False otherwise."""
@@ -79,6 +81,7 @@ class MysqlConnector:
         if self.is_connected():
             tmp = self._conn.database
             self._conn.close()
+            self._cursor = None
             self._connected = False
             print('Closed connection with database {}.'.format(tmp))
         else:
@@ -136,18 +139,18 @@ class MysqlConnector:
         else:
             print('Not connected to any database.')
 
-    @staticmethod
-    def _parse_operations(operation):
-        """Parses a string containing multiple sql statements separated by ';'
-        and returns a list containing each of those statements"""
-        if operation.startswith(';'):
-            operation = operation[1:]
-        if operation.endswith(';'):
-            operation = operation[:-1]
-        operations = operation.split(';')
-        for i in range(0, len(operations)):
-            operations[i] = operations[i] + ';'
-        return operations
+    # @staticmethod
+    # def _parse_operations(operation):
+    #     """Parses a string containing multiple sql statements separated by ';'
+    #     and returns a list containing each of those statements"""
+    #     if operation.startswith(';'):
+    #         operation = operation[1:]
+    #     if operation.endswith(';'):
+    #         operation = operation[:-1]
+    #     operations = operation.split(';')
+    #     for i in range(0, len(operations)):
+    #         operations[i] = operations[i] + ';'
+    #     return operations
 
     def _execute(self, operations):
         # https://dev.mysql.com/doc/connector-python/en/connector-python-api-mysqlcursor-execute.html
