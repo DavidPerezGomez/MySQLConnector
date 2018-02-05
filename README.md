@@ -1,2 +1,2 @@
 #MySQLConnector
-Módulo para trabajar fácilmente con MySQL en pyhton.
+Módulo para trabajar con MySQL en pyhton simplificando el uso de mysql.connector
